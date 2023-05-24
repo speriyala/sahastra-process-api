@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+		<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="e747452d-e5f9-46cb-af0a-54030401978d" >
+		<http:listener-connection host="0.0.0.0" port="8083" />
+	</http:listener-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="74fd4c95-01c8-4182-a8a6-48e2e3ecd229" >
+		<file:connection workingDir="C:\Users\ADMIN\Desktop\database_write3" />
+	</file:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="ac3a6490-f7bd-45c3-9310-f4d9b42b2c45" >
+		<http:request-connection host="localhost" port="8085" />
+	</http:request-config>
+	<configuration doc:name="Configuration" doc:id="2e8709a3-b8be-4446-a4eb-de7fdd2b4028" defaultErrorHandler-ref="Default_Error_Handler" />
+	
+	
+</mule>

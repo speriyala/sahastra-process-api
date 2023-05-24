@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:batch="http://www.mulesoft.org/schema/mule/batch"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+	<flow name="sahastra-process-apiFlow" doc:id="e1db5d82-a941-4ebb-b112-4a8ed9dfcff7" >
+		<http:listener doc:name="Listener" doc:id="40d1bca6-fe0e-44c5-a23a-6e3240e217e4" config-ref="HTTP_Listener_config" path="/papi" allowedMethods="POST"/>
+		<logger level="INFO" doc:name="Logger" doc:id="fe40e974-efa0-4c38-88a4-95aba7c2a54c" />
+		<file:read doc:name="readCSV" doc:id="d66aa069-7d9d-4ad6-bb33-ec72ec7d30f3" config-ref="File_Config" path="100000-Sales-Records.csv"/>
+		<batch:job jobName="sahastra-process-apiBatch_Job" doc:id="6f7a2eca-d101-4fd8-aa1b-ba9d13b3a354" >
+			<batch:process-records >
+				<batch:step name="Batch_Step" doc:id="dadc16e6-f63e-4c3a-9c66-ad7ad42a08d9" >
+					<logger level="INFO" doc:name="Logger" doc:id="a7941f78-34bf-48ee-a626-344fed7256d2" message="payload"/>
+					<ee:transform doc:name="transformMap" doc:id="20614455-8865-444a-994b-38eb6d7bbc9e" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	region: payload01.Region,
+	country: payload01.Country,
+	itemType: payload01."Item Type",
+	salesChannel: payload01."Sales Channel",
+	orderPriority: payload01."Order Priority",
+	orderDate: payload01."Order Date" replace /-/ with "/",
+	orderID: payload01."Order ID",
+	shipDate: payload01."Ship Date"  replace /-/ with "/",
+	unitsSold: payload01."Units Sold",
+	unitPrice: payload01."Unit Price",
+	unitCost: payload01."Unit Cost" as Number,
+	totalRevenue: payload01."Total Revenue" as Number,
+	totalCost: payload01."Total Cost" as Number,
+	totalProfit: payload01."Total Profit" as Number
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<batch:aggregator doc:name="Batch Aggregator" doc:id="87e5bf18-0fd3-4bf0-8c05-815f358b9897" size="10000">
+						<ee:transform doc:name="transformFlatten" doc:id="29c647f6-213c-40ae-89ff-4ea5ebac6f0b" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+flatten(payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<http:request method="POST" doc:name="requestSalesDB" doc:id="b7d6ec09-a33a-4997-a232-870356f2fc88" config-ref="HTTP_Request_configuration" path="/createSales"/>
+						<logger level="INFO" doc:name="Logger" doc:id="d64796ca-952b-4fed-a7e7-78f41f513ca7" message="payload" />
+					</batch:aggregator>
+				</batch:step>
+			</batch:process-records>
+			<batch:on-complete >
+				<ee:transform doc:name="Transform Message" doc:id="568e82bf-448e-4e2f-bedd-5ffe9be6480a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</batch:on-complete>
+		</batch:job>
+		<logger level="INFO" doc:name="Logger" doc:id="0ee2f2f0-474f-4c56-b82b-56a4c36f4fef" message="end"/>
+	</flow>
+</mule>
